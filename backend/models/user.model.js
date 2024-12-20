@@ -1,49 +1,47 @@
-import { Schema, model } from "mongoose";
-import { compare, hash } from "bcrypt";
-import jwt from "jsonwebtoken";
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-const userSchema = new Schema({
+const userSchema = new mongoose.Schema({
     fullname: {
         firstname: {
-            type: String, 
-            required: true, 
-            minlength: [3, 'First name must be at least 3']
+            type: String,
+            required: true,
+            minlength: [3, 'First name must be at least 3 characters long'],
         },
         lastname: {
             type: String,
-            minlength: [3, 'Last name must be at least 3 characters']
-        }
+            minlength: [3, 'Last name must be at least 3 characters long'],
+        },
     },
-email: {
-    type: String,
-    required: true,
-    unique: true,
-    minLength: [5, 'Email must be at least 5 characters']
-},
-password: {
-    type: String,
-    required: true,
-    select: false
-},
-socketId: {
-    type: String,
-}
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        minlength: [5, 'Email must be at least 5 characters long'],
+    },
+    password: {
+        type: String,
+        required: true,
+        select: false,
+    },
+    socketId: {
+        type: String,
+    },
+});
 
-})
-
-userSchema.methods.generateAuthToken = function() {
-    const token = jwt.sign({_id: this._id}, process.env.JWT_SECRET);
-    return token;
-}
+userSchema.methods.generateAuthToken = function () {
+    return jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+};
 
 userSchema.methods.comparePassword = async function (password) {
-    return await compare(password, this.password);
-}
+    return bcrypt.compare(password, this.password);
+};
 
 userSchema.statics.hashPassword = async function (password) {
-    return await hash(password, 10);
-}
+    return bcrypt.hash(password, 10);
+};
 
-const userModel = model("User", userSchema);
+const userModel = mongoose.model('user', userSchema);
 
 export default userModel;
